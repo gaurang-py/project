@@ -1,0 +1,436 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: School Management System
+  description: |-
+    The School Management System API is a comprehensive backend solution designed to facilitate the management of **users**, **schools**, **classrooms**, and **students** within an educational environment. It offers features for user **authentication**, **authorization**, and **CRUD operations** on essential entities such as users, schools, and classrooms.
+
+    ## Key Features:
+
+    - ### User Management:
+
+      Create an initial super admin with elevated privileges.
+    Authenticate users and generate access tokens using JWT.
+    Manage user roles, including super admins, school admins, and regular users.
+
+    - ### School Management:
+
+      Create, update, and delete schools with super admin privileges.
+    Assign school admins to specific schools.
+    Ensure that only super admins can perform school-related operations.
+
+    - ### Classroom Management:
+
+      Allow school admins to create, list, and delete classrooms within their respective schools.
+    Implement proper error handling for classroom operations.
+    Security Measures:
+
+    - ### Security Measures
+      Use JWT tokens for user authentication and authorization.
+    Implement bcrypt for password hashing.
+    Ensure that sensitive operations require super admin privileges.
+
+    - ### Swagger Documentation:
+
+      Provide comprehensive Swagger documentation for each API endpoint.
+    Include details on request/response formats, required parameters, and possible error scenarios.
+    
+    ## Technologies Used:
+
+    - Node.js for server-side scripting.
+    - Express.js for building the API.
+    - MongoDB as the database for storing user, school, and classroom information.
+    - JWT for secure user authentication.
+    - bycrpt for password hashing.
+    - Swagger for API documentation.
+
+    ## Deployment:
+      Deployed the School Management System API on a cloud service Render, ensuring seamless access and scalability.
+ 
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      in: header
+      name: token
+tags:
+  - name: Super Admin
+  - name: User
+  - name: School
+  - name: Classroom
+
+paths:
+  ## User Management APIs ##
+  /api/user/createInitialSuperAdmin:
+    post:
+      summary: Create initial super admin user
+      tags:
+        - Super Admin
+      security:
+        # - api_key: []  # Add your security definition here
+      requestBody:
+        description: 'User details for creating initial super admin'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              example:
+                username: 'superadmin'
+                email: 'superadmin@example.com'
+                password: 'supersecretpassword'
+      responses:
+        '200':
+          description: Successful creation. Returns a long-lived token for the new super admin.
+        '400':
+          description: Bad request. Check the request payload for missing or invalid fields.
+        '401':
+          description: Unauthorized. Ensure proper security measures are in place.
+
+  /api/user/addingUser:
+    post:
+      summary: Add a user with specified access rights
+      tags:
+        - User
+      security:
+        - api_key: []  # Add your security definition here
+      requestBody:
+        description: 'User details for adding a user'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                accessRights:
+                  type: integer
+              example:
+                username: 'john_doe'
+                email: 'john@example.com'
+                password: 'securepassword'
+                accessRights: user  # user => student,  school:${school_name} => school admin
+      responses:
+        '200':
+          description: Successful creation. Returns a long-lived token for the new user.
+        '400':
+          description: Bad request. Check the request payload for missing or invalid fields.
+        '401':
+          description: Unauthorized. Ensure a valid authentication token is provided.
+        # '403':
+        #   description: Forbidden. Only super admins are authorized to create users with specific access rights.
+
+  /api/user/loginUser:
+    post:
+      summary: Login using registered user credentials
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              example:
+                email: "sherif17.ahmed@gmail.com"
+                password: "123456789"
+      responses:
+        "200":
+          description: Logged in successfully
+        "400":
+          description: Bad request
+
+  /api/user/updateUserAccessRights:
+    put:
+      summary: Update the user access right if you are a super admin
+      tags:
+        - Super Admin
+      security:
+        - api_key: []
+      requestBody:
+        description: "User access rights: user => no rights, school:${school_name} => school admin, superAdmin => super admin, default => no rights"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                accessRights:
+                  type: integer
+              example:
+                email: "sherif17.ahmed@gmail.com"
+                accessRights: "user"
+      responses:
+        "200":
+          description: Successful request
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - Invalid token or insufficient user rights
+
+  /api/user/deleteUser:
+    delete:
+      summary: Delete a user, requires super admin role
+      tags:
+        - Super Admin
+      security:
+        - api_key: []
+      requestBody:
+        description: "Email of the user to delete"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              example:
+                email: "sherif17.ahmed@gmail.com"
+      responses:
+        "200":
+          description: Successful request
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - Invalid token or insufficient user rights
+
+  /api/user/updateUser:
+    put:
+      summary: Update user information
+      tags:
+        - User
+      security:
+        - api_key: []
+      requestBody:
+        description: "User information to update"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                newInfo:
+                  type: object
+              example:
+                email: "sherif17.ahmed@gmail.com"
+                newInfo: { username: "NewUsername", password: "NewPassword" }
+      responses:
+        "200":
+          description: Successful request
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - Invalid token or insufficient user rights
+
+  /api/user/getAllUsers:
+    get:
+      summary: Get all users (Super Admin Only)
+      tags:
+        - Super Admin
+      security:
+        - api_key: []
+      responses:
+        "200":
+          description: Successful request
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - Invalid token or insufficient user rights
+
+  /api/user/deleteAllUsers:
+    delete:
+      summary: Delete all users (super admin only)
+      tags:
+        - Super Admin
+      security:
+        - api_key: []  # Add your security definition here
+      responses:
+        '200':
+          description: Successful deletion. Returns a message.
+        '401':
+          description: Unauthorized. Ensure a valid super admin authentication token is provided.
+        '403':
+          description: Forbidden. Only super admins are authorized to delete all users.
+        '500':
+          description: Internal Server Error. Failed to delete all users.
+
+
+  ## School APIs ##
+  /api/school/createSchool:
+      post:
+        summary: Create a new school, you need to be a super admin to do that 
+        tags:
+          - School
+        security:
+          - api_key: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  address:
+                    type: string
+                  level:
+                    type: string
+                example:
+                  name: Modern Future
+                  address: Cairo, Egypt
+                  level: preparatory
+        responses:
+          '200':
+            description: Created successfully
+          '400':
+            description: Bad request
+          "401":
+            description: Unauthorized - Invalid token or insufficient user rights
+  
+  /api/school/getAllSchools:
+    get:
+      summary: Get all users (Super Admin Only)
+      tags:
+        - School
+      security:
+        - api_key: []
+      responses:
+        "200":
+          description: Successful request
+        "404":
+          description: No schools found
+        "401":
+          description: Unauthorized,You should be a super admin to get all schools
+        "500":
+          description: Internal Server Error
+
+  /api/school/updateSchool:
+    put:
+      summary: Update school information
+      tags:
+        - School
+      security:
+        - api_key: []
+      requestBody:
+        description: "School information to update"
+        required: true
+        content:
+          application/json:
+              example:
+                id: "schoolId123"
+                name: "Updated School Name"
+                address: "Updated School Address"
+                level: "Updated School Level"
+      responses:
+        "200":
+          description: Successful request
+        "401":
+          description: Unauthorized - Only super admin can update schools
+        "400":
+          description: Bad request
+
+  /api/school/deleteAllSchools:
+    delete:
+      summary: Delete all schools
+      tags:
+        - School
+      security:
+        - api_key: []
+      responses:
+        "200":
+          description: Successful request
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized - Only super admin can delete schools
+
+## Classroom APIs ##
+  /api/classroom/createClassroom:
+    post:
+      summary: Create a new classroom in you school, you have to be a school admin to create a classroom
+      tags:
+        - Classroom
+      security:
+        - api_key: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+              example:
+                label: 12C
+      responses:
+        '200':
+          description: Created successfully
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized 
+
+  /api/classroom/getAllClssrooms:
+    get:
+      summary: Get all the classrooms of your school
+      tags:
+        - Classroom
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: Successful request
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized 
+
+  /api/classroom/deleteClassroom:
+    delete:
+      summary: Delete a classroom by its label from your school
+      tags:
+        - Classroom
+      security:
+        - api_key: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+              example:
+                label: 12C
+      responses:
+        '200':
+          description: Successful request
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized 
